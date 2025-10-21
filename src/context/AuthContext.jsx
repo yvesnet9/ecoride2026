@@ -1,37 +1,58 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
-// Création du contexte
 const AuthContext = createContext();
-
-// Hook pour l'utiliser facilement
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+    const [reservations, setReservations] = useState([]);
 
-    // Charger l'utilisateur depuis localStorage au démarrage
-      useEffect(() => {
-          const storedUser = localStorage.getItem("ecorideUser");
-              if (storedUser) setUser(JSON.parse(storedUser));
-                }, []);
+      // Charger user + réservations
+        useEffect(() => {
+            const storedUser = localStorage.getItem("ecorideUser");
+                const storedReservations = localStorage.getItem("ecorideReservations");
+                    if (storedUser) setUser(JSON.parse(storedUser));
+                        if (storedReservations) setReservations(JSON.parse(storedReservations));
+                          }, []);
 
-                  // Fonction de connexion
-                    const login = (email) => {
-                        const fakeUser = { email };
-                            setUser(fakeUser);
-                                localStorage.setItem("ecorideUser", JSON.stringify(fakeUser));
-                                  };
+                            // Sauvegarde automatique
+                              useEffect(() => {
+                                  localStorage.setItem("ecorideReservations", JSON.stringify(reservations));
+                                    }, [reservations]);
 
-                                    // Fonction de déconnexion
-                                      const logout = () => {
-                                          setUser(null);
-                                              localStorage.removeItem("ecorideUser");
-                                                };
+                                      const login = (email) => {
+                                          const fakeUser = { email };
+                                              setUser(fakeUser);
+                                                  localStorage.setItem("ecorideUser", JSON.stringify(fakeUser));
+                                                    };
 
-                                                  return (
-                                                      <AuthContext.Provider value={{ user, login, logout }}>
-                                                            {children}
-                                                                </AuthContext.Provider>
-                                                                  );
-                                                                  };
-                                                                  
+                                                      const logout = () => {
+                                                          setUser(null);
+                                                              localStorage.removeItem("ecorideUser");
+                                                                };
+
+                                                                  // ✅ Ajouter une réservation
+                                                                    const reserveRide = (ride) => {
+                                                                        const exists = reservations.find((r) => r.id === ride.id);
+                                                                            if (!exists) {
+                                                                                  setReservations([...reservations, ride]);
+                                                                                        alert("✅ Trajet réservé avec succès !");
+                                                                                            } else {
+                                                                                                  alert("ℹ️ Vous avez déjà réservé ce trajet.");
+                                                                                                      }
+                                                                                                        };
+
+                                                                                                          // ❌ Supprimer une réservation
+                                                                                                            const cancelReservation = (id) => {
+                                                                                                                setReservations(reservations.filter((r) => r.id !== id));
+                                                                                                                  };
+
+                                                                                                                    return (
+                                                                                                                        <AuthContext.Provider
+                                                                                                                              value={{ user, login, logout, reservations, reserveRide, cancelReservation }}
+                                                                                                                                  >
+                                                                                                                                        {children}
+                                                                                                                                            </AuthContext.Provider>
+                                                                                                                                              );
+                                                                                                                                              };
+                                                                                                                                              

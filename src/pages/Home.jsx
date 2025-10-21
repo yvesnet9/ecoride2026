@@ -1,78 +1,84 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 export default function Home() {
+  const [departure, setDeparture] = useState("");
+  const [arrival, setArrival] = useState("");
+  const [date, setDate] = useState("");
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (!departure || !arrival) {
+      alert("🚨 Veuillez remplir les champs de départ et d’arrivée.");
+      return;
+    }
+
+    // Redirection vers la page des covoiturages
+    navigate("/rides");
+  };
+
   return (
-      <div className="container mx-auto text-center py-10">
-            {/* Titre principal */}
-                  <h1 className="text-4xl font-bold text-green-700 mb-4">
-                          Bienvenue sur EcoRide 🌍
-                                </h1>
-                                      <p className="text-lg text-gray-700 mb-10">
-                                              La plateforme de covoiturage écologique et économique.
-                                                    </p>
+    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-green-50 text-center p-8">
+      <h1 className="text-4xl font-bold text-green-700 mb-4">
+        Bienvenue sur 🌿 EcoRide
+      </h1>
 
-                                                          {/* Formulaire de recherche */}
-                                                                <form
-                                                                        action="#"
-                                                                                method="GET"
-                                                                                        className="flex flex-wrap justify-center gap-3 mb-6"
-                                                                                              >
-                                                                                                      <input
-                                                                                                                type="text"
-                                                                                                                          name="depart"
-                                                                                                                                    placeholder="Ville de départ"
-                                                                                                                                              className="border border-gray-300 rounded px-3 py-2 w-60"
-                                                                                                                                                        required
-                                                                                                                                                                />
-                                                                                                                                                                        <input
-                                                                                                                                                                                  type="text"
-                                                                                                                                                                                            name="arrivee"
-                                                                                                                                                                                                      placeholder="Ville d'arrivée"
-                                                                                                                                                                                                                className="border border-gray-300 rounded px-3 py-2 w-60"
-                                                                                                                                                                                                                          required
-                                                                                                                                                                                                                                  />
-                                                                                                                                                                                                                                          <input
-                                                                                                                                                                                                                                                    type="date"
-                                                                                                                                                                                                                                                              name="date"
-                                                                                                                                                                                                                                                                        className="border border-gray-300 rounded px-3 py-2"
-                                                                                                                                                                                                                                                                                  required
-                                                                                                                                                                                                                                                                                          />
-                                                                                                                                                                                                                                                                                                  <button
-                                                                                                                                                                                                                                                                                                            type="submit"
-                                                                                                                                                                                                                                                                                                                      className="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition"
-                                                                                                                                                                                                                                                                                                                              >
-                                                                                                                                                                                                                                                                                                                                        Rechercher
-                                                                                                                                                                                                                                                                                                                                                </button>
-                                                                                                                                                                                                                                                                                                                                                      </form>
+      <p className="text-gray-700 max-w-xl mb-6">
+        Trouvez facilement un covoiturage écologique près de chez vous.
+        Ensemble, réduisons notre empreinte carbone 🌍
+      </p>
 
-                                                                                                                                                                                                                                                                                                                                                            {/* Paragraphe d'information sous le formulaire */}
-                                                                                                                                                                                                                                                                                                                                                                  <p className="text-gray-600 mt-4 mb-10">
-                                                                                                                                                                                                                                                                                                                                                                          Vous pouvez aussi consulter tous les trajets disponibles dans la section{" "}
-                                                                                                                                                                                                                                                                                                                                                                                  <span className="text-green-600 font-semibold">Covoiturages</span>.
-                                                                                                                                                                                                                                                                                                                                                                                        </p>
+      {/* ✅ Formulaire de recherche */}
+      <form
+        onSubmit={handleSearch}
+        className="bg-white shadow-lg rounded-lg p-6 flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl"
+      >
+        <input
+          type="text"
+          placeholder="Départ"
+          value={departure}
+          onChange={(e) => setDeparture(e.target.value)}
+          className="border border-gray-300 rounded px-4 py-2 w-full md:w-1/3 focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="text"
+          placeholder="Arrivée"
+          value={arrival}
+          onChange={(e) => setArrival(e.target.value)}
+          className="border border-gray-300 rounded px-4 py-2 w-full md:w-1/3 focus:ring-2 focus:ring-green-500"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="border border-gray-300 rounded px-4 py-2 w-full md:w-1/4 focus:ring-2 focus:ring-green-500"
+        />
+        <button
+          type="submit"
+          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition w-full md:w-auto"
+        >
+          Rechercher
+        </button>
+      </form>
 
-                                                                                                                                                                                                                                                                                                                                                                                              {/* Trois blocs d'informations */}
-                                                                                                                                                                                                                                                                                                                                                                                                    <div className="grid md:grid-cols-3 gap-6">
-                                                                                                                                                                                                                                                                                                                                                                                                            <div className="p-5 bg-white rounded shadow">
-                                                                                                                                                                                                                                                                                                                                                                                                                      <h2 className="text-green-600 text-xl font-semibold mb-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                  🌱 Voyagez vert
-                                                                                                                                                                                                                                                                                                                                                                                                                                            </h2>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                      <p>Partagez vos trajets pour réduire votre empreinte carbone.</p>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                              </div>
+      <p className="text-gray-600 mt-4">
+        Vous pouvez aussi consulter tous les trajets disponibles dans la section{" "}
+        <span className="text-green-600 font-semibold">Covoiturages</span>.
+      </p>
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <div className="p-5 bg-white rounded shadow">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <h2 className="text-green-600 text-xl font-semibold mb-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            💶 Faites des économies
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      </h2>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <p>Partagez les frais et profitez de trajets plus abordables.</p>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+      <img
+        src="https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=60"
+        alt="EcoRide voiture verte"
+        className="rounded-2xl shadow-md mt-8 w-full max-w-lg"
+      />
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div className="p-5 bg-white rounded shadow">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <h2 className="text-green-600 text-xl font-semibold mb-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      🤝 Rejoignez la communauté
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </h2>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <p>Rencontrez des personnes qui partagent vos valeurs écologiques.</p>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              );
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+      <p className="mt-6 text-gray-600">
+        <strong>🌱 Simple, économique et écologique.</strong>
+        <br />
+        Rejoignez le mouvement EcoRide dès aujourd’hui !
+      </p>
+    </div>
+  );
+}
