@@ -1,64 +1,40 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext();
-export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
     const [reservations, setReservations] = useState([]);
 
-      useEffect(() => {
-          const storedUser = localStorage.getItem("ecorideUser");
-              const storedReservations = localStorage.getItem("ecorideReservations");
-                  if (storedUser) setUser(JSON.parse(storedUser));
-                      if (storedReservations) setReservations(JSON.parse(storedReservations));
-                        }, []);
+      // 🔁 Charger l'utilisateur depuis le localStorage au démarrage
+        useEffect(() => {
+            const savedUser = localStorage.getItem("user");
+                if (savedUser) {
+                      setCurrentUser(JSON.parse(savedUser));
+                          }
+                            }, []);
 
-                          useEffect(() => {
-                              localStorage.setItem("ecorideReservations", JSON.stringify(reservations));
-                                }, [reservations]);
+                              // ✅ Connexion (stocke dans le localStorage)
+                                const login = (email) => {
+                                    const loggedUser = { email };
+                                        setCurrentUser(loggedUser);
+                                            localStorage.setItem("user", JSON.stringify(loggedUser));
+                                              };
 
-                                  const login = (email) => {
-                                      const fakeUser = {
-                                            email,
-                                                  isAdmin: email === "admin@ecoride.fr", // ✅ admin unique
-                                                      };
-                                                          setUser(fakeUser);
-                                                              localStorage.setItem("ecorideUser", JSON.stringify(fakeUser));
-                                                                };
+                                                // 🚪 Déconnexion
+                                                  const logout = () => {
+                                                      setCurrentUser(null);
+                                                          localStorage.removeItem("user");
+                                                            };
 
-                                                                  const logout = () => {
-                                                                      setUser(null);
-                                                                          localStorage.removeItem("ecorideUser");
-                                                                            };
+                                                              return (
+                                                                  <AuthContext.Provider
+                                                                        value={{ currentUser, login, logout, reservations, setReservations }}
+                                                                            >
+                                                                                  {children}
+                                                                                      </AuthContext.Provider>
+                                                                                        );
+                                                                                        };
 
-                                                                              const reserveRide = (ride) => {
-                                                                                  const exists = reservations.find((r) => r.id === ride.id);
-                                                                                      if (!exists) {
-                                                                                            setReservations([...reservations, ride]);
-                                                                                                  alert("✅ Trajet réservé avec succès !");
-                                                                                                      } else {
-                                                                                                            alert("ℹ️ Vous avez déjà réservé ce trajet.");
-                                                                                                                }
-                                                                                                                  };
-
-                                                                                                                    const cancelReservation = (id) => {
-                                                                                                                        setReservations(reservations.filter((r) => r.id !== id));
-                                                                                                                          };
-
-                                                                                                                            return (
-                                                                                                                                <AuthContext.Provider
-                                                                                                                                      value={{
-                                                                                                                                              user,
-                                                                                                                                                      login,
-                                                                                                                                                              logout,
-                                                                                                                                                                      reservations,
-                                                                                                                                                                              reserveRide,
-                                                                                                                                                                                      cancelReservation,
-                                                                                                                                                                                            }}
-                                                                                                                                                                                                >
-                                                                                                                                                                                                      {children}
-                                                                                                                                                                                                          </AuthContext.Provider>
-                                                                                                                                                                                                            );
-                                                                                                                                                                                                            };
-                                                                                                                                                                                                            
+                                                                                        export const useAuth = () => useContext(AuthContext);
+                                                                                        

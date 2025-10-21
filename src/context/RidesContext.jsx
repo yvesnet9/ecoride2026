@@ -1,35 +1,67 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { rides as defaultRides } from "../data/rides";
+import { createContext, useContext, useState } from "react";
 
 const RidesContext = createContext();
-export const useRides = () => useContext(RidesContext);
 
-export const RidesProvider = ({ children }) => {
-  const [rides, setRides] = useState([]);
+export function RidesProvider({ children }) {
+  const [rides, setRides] = useState([
+      {
+            id: 1,
+                  title: "Paris → Lyon",
+                        departure: "Paris",
+                              arrival: "Lyon",
+                                    date: "21/10/2025",
+                                          status: "planned",
+                                                driver: "admin@ecoride.fr",
+                                                      passengers: ["user@ecoride.fr"],
+                                                          },
+                                                              {
+                                                                    id: 2,
+                                                                          title: "Marseille → Nice",
+                                                                                departure: "Marseille",
+                                                                                      arrival: "Nice",
+                                                                                            date: "19/10/2025",
+                                                                                                  status: "completed",
+                                                                                                        driver: "admin@ecoride.fr",
+                                                                                                              passengers: ["user@ecoride.fr"],
+                                                                                                                  },
+                                                                                                                    ]);
 
-    useEffect(() => {
-        const stored = localStorage.getItem("ecorideRides");
-            if (stored) setRides(JSON.parse(stored));
-                else setRides(defaultRides);
-                  }, []);
+                                                                                                                      /**
+                                                                                                                         * Met à jour le statut d’un covoiturage
+                                                                                                                            * @param {number} id - ID du covoiturage
+                                                                                                                               * @param {string} newStatus - Nouveau statut (planned, in_progress, completed)
+                                                                                                                                  */
+                                                                                                                                    const updateRideStatus = (id, newStatus) => {
+                                                                                                                                        setRides((prevRides) => {
+                                                                                                                                              const updated = prevRides.map((ride) =>
+                                                                                                                                                      ride.id === id ? { ...ride, status: newStatus } : ride
+                                                                                                                                                            );
 
-                    useEffect(() => {
-                        localStorage.setItem("ecorideRides", JSON.stringify(rides));
-                          }, [rides]);
+                                                                                                                                                                  // Trouver le trajet mis à jour (dans la nouvelle version)
+                                                                                                                                                                        const updatedRide = updated.find((r) => r.id === id);
 
-                            const addRide = (ride) => {
-                                const newRide = { ...ride, id: Date.now() };
-                                    setRides([...rides, newRide]);
-                                      };
+                                                                                                                                                                              // Simulation d'envoi de notification aux passagers
+                                                                                                                                                                                    if (updatedRide && newStatus === "completed") {
+                                                                                                                                                                                            updatedRide.passengers.forEach((email) => {
+                                                                                                                                                                                                      alert(
+                                                                                                                                                                                                                  `📩 Notification envoyée à ${email} : le covoiturage "${updatedRide.title}" est terminé.\nVeuillez confirmer votre expérience dans votre espace passager.`
+                                                                                                                                                                                                                            );
+                                                                                                                                                                                                                                    });
+                                                                                                                                                                                                                                          }
 
-                                        const deleteRide = (id) => {
-                                            setRides(rides.filter((r) => r.id !== id));
-                                              };
+                                                                                                                                                                                                                                                return updated;
+                                                                                                                                                                                                                                                    });
+                                                                                                                                                                                                                                                      };
 
-                                                return (
-                                                    <RidesContext.Provider value={{ rides, addRide, deleteRide }}>
-                                                          {children}
-                                                              </RidesContext.Provider>
-                                                                );
-                                                                };
-                                                                
+                                                                                                                                                                                                                                                        return (
+                                                                                                                                                                                                                                                            <RidesContext.Provider value={{ rides, updateRideStatus }}>
+                                                                                                                                                                                                                                                                  {children}
+                                                                                                                                                                                                                                                                      </RidesContext.Provider>
+                                                                                                                                                                                                                                                                        );
+                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                        /**
+                                                                                                                                                                                                                                                                         * Hook personnalisé pour accéder facilement au contexte des covoiturages
+                                                                                                                                                                                                                                                                          */
+                                                                                                                                                                                                                                                                          export const useRides = () => useContext(RidesContext);
+                                                                                                                                                                                                                                                                          
