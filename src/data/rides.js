@@ -1,0 +1,38 @@
+export const rides = [
+  {
+    id: 1,
+    driver: "Amine B.",
+    departure: "Paris",
+    arrival: "Lille",
+    date: "2025-10-23",
+    seats: 3,
+    price: 25,
+  },
+  {
+    id: 2,
+    driver: "Sarah K.",
+    departure: "Lyon",
+    arrival: "Marseille",
+    date: "2025-10-24",
+    seats: 2,
+    price: 30,
+  },
+  {
+    id: 3,
+    driver: "David R.",
+    departure: "Bordeaux",
+    arrival: "Toulouse",
+    date: "2025-10-23",
+    seats: 1,
+    price: 20,
+  },
+  {
+    id: 4,
+    driver: "Julie P.",
+    departure: "Paris",
+    arrival: "Rouen",
+    date: "2025-10-25",
+    seats: 4,
+    price: 18,
+  },
+];
