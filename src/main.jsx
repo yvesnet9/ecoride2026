@@ -1,29 +1,39 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import "./index.css";
-import App from "./App.jsx";
 
-// 🧠 Contextes globaux
+import App from "./App.jsx";
+import "./index.css";
+
+// 🧩 Contexts globaux
+import { UserProvider } from "./context/UserContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { RidesProvider } from "./context/RidesContext.jsx";
 import { FeedbackProvider } from "./context/FeedbackContext.jsx";
 
-createRoot(document.getElementById("root")).render(
-  <StrictMode>
-      {/* ✅ Un seul Router global */}
-          <BrowserRouter>
-                {/* Contexte global des feedbacks (avis & signalements) */}
-                      <FeedbackProvider>
-                              {/* Contexte global de l'authentification */}
+/**
+ * 🧠 Hiérarchie des providers :
+  * BrowserRouter
+   * └─ UserProvider          → Gestion des utilisateurs / rôles
+    *    └─ FeedbackProvider   → Gestion des avis passagers
+     *       └─ AuthProvider    → Connexion / déconnexion / rôle courant
+      *          └─ RidesProvider→ Données covoiturages
+       *             └─ App       → Application principale
+        */
+
+        createRoot(document.getElementById("root")).render(
+          <StrictMode>
+              <BrowserRouter>
+                    <UserProvider>
+                            <FeedbackProvider>
                                       <AuthProvider>
-                                                {/* Contexte global des trajets */}
-                                                          <RidesProvider>
-                                                                      <App />
-                                                                                </RidesProvider>
-                                                                                        </AuthProvider>
+                                                  <RidesProvider>
+                                                                <App />
+                                                                            </RidesProvider>
+                                                                                      </AuthProvider>
                                                                                               </FeedbackProvider>
-                                                                                                  </BrowserRouter>
-                                                                                                    </StrictMode>
-                                                                                                    );
-                                                                                                    
+                                                                                                    </UserProvider>
+                                                                                                        </BrowserRouter>
+                                                                                                          </StrictMode>
+                                                                                                          );
+                                                                                                          

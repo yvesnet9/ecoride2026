@@ -2,39 +2,80 @@ import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext();
 
+/**
+ * ✅ AuthProvider :
+ * Gère l'authentification + les rôles utilisateurs (admin, employee, driver, passenger)
+ */
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-    const [reservations, setReservations] = useState([]);
+  // 🧠 Utilisateur actuellement connecté
+  const [user, setUser] = useState(null);
 
-      // 🔁 Charger l'utilisateur depuis le localStorage au démarrage
-        useEffect(() => {
-            const savedUser = localStorage.getItem("user");
-                if (savedUser) {
-                      setCurrentUser(JSON.parse(savedUser));
-                          }
-                            }, []);
+  // 🚗 Réservations ou autres données utilisateur (placeholder)
+  const [reservations, setReservations] = useState([]);
 
-                              // ✅ Connexion (stocke dans le localStorage)
-                                const login = (email) => {
-                                    const loggedUser = { email };
-                                        setCurrentUser(loggedUser);
-                                            localStorage.setItem("user", JSON.stringify(loggedUser));
-                                              };
+  // 🧩 Base de données simulée (sera remplacée plus tard par une vraie API)
+  const USERS = [
+    { email: "admin@ecoride.fr", role: "admin" },
+    { email: "employee@ecoride.fr", role: "employee" },
+    { email: "driver@ecoride.fr", role: "driver" },
+    { email: "user@ecoride.fr", role: "passenger" },
+  ];
 
-                                                // 🚪 Déconnexion
-                                                  const logout = () => {
-                                                      setCurrentUser(null);
-                                                          localStorage.removeItem("user");
-                                                            };
+  // 🔁 Charger l'utilisateur depuis le localStorage au démarrage
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
 
-                                                              return (
-                                                                  <AuthContext.Provider
-                                                                        value={{ currentUser, login, logout, reservations, setReservations }}
-                                                                            >
-                                                                                  {children}
-                                                                                      </AuthContext.Provider>
-                                                                                        );
-                                                                                        };
+  /**
+   * ✅ Connexion d’un utilisateur
+   * Associe automatiquement un rôle selon l’adresse email.
+   */
+  const login = (email) => {
+    const foundUser = USERS.find((u) => u.email === email);
 
-                                                                                        export const useAuth = () => useContext(AuthContext);
-                                                                                        
+    if (!foundUser) {
+      alert("❌ Utilisateur inconnu !");
+      return;
+    }
+
+    const loggedUser = { email: foundUser.email, role: foundUser.role };
+    setUser(loggedUser);
+    localStorage.setItem("user", JSON.stringify(loggedUser));
+
+    alert(
+      `✅ Connecté en tant que ${foundUser.role.toUpperCase()} (${
+        foundUser.email
+      })`
+    );
+  };
+
+  /**
+   * 🚪 Déconnexion
+   */
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        reservations,
+        setReservations,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+/**
+ * 🔌 Hook personnalisé pour accéder facilement à l’authentification
+ */
+export const useAuth = () => useContext(AuthContext);

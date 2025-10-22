@@ -5,6 +5,7 @@ import Profile from "../pages/Profile.jsx";
 import AdminDashboard from "../pages/AdminDashboard.jsx";
 import ProtectedAdminRoute from "../components/ProtectedAdminRoute.jsx";
 import ProtectedEmployeeRoute from "../components/ProtectedEmployeeRoute.jsx";
+import EmployeeManager from "../pages/EmployeeManager.jsx";
 
 import ProfileRides from "../pages/ProfileRides.jsx";
 import PassengerRides from "../pages/PassengerRides.jsx";
@@ -43,6 +44,15 @@ export default function AppRouter() {
                                                                                                                                           </ProtectedAdminRoute>
                                                                                                                                                   }
                                                                                                                                                         />
+                                                                                                                                                        <Route
+                                                                                                                                                          path="/admin/employees"
+                                                                                                                                                            element={
+                                                                                                                                                                <ProtectedAdminRoute>
+                                                                                                                                                                      <EmployeeManager />
+                                                                                                                                                                          </ProtectedAdminRoute>
+                                                                                                                                                                            }
+                                                                                                                                                                            />
+                                                                                                                                                                            
 
                                                                                                                                                               {/* --- Espace employé --- */}
                                                                                                                                                                     <Route
