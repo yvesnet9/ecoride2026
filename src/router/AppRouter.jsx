@@ -4,8 +4,12 @@ import Rides from "../pages/Rides.jsx";
 import Profile from "../pages/Profile.jsx";
 import AdminDashboard from "../pages/AdminDashboard.jsx";
 import ProtectedAdminRoute from "../components/ProtectedAdminRoute.jsx";
+import ProtectedEmployeeRoute from "../components/ProtectedEmployeeRoute.jsx";
+
 import ProfileRides from "../pages/ProfileRides.jsx";
 import PassengerRides from "../pages/PassengerRides.jsx";
+import EmployeeDashboard from "../pages/EmployeeDashboard.jsx";
+
 import Admin from "../pages/Admin.jsx";
 import Contact from "../pages/Contact.jsx";
 import Login from "../pages/Login.jsx";
@@ -31,16 +35,27 @@ export default function AppRouter() {
                                                                               <Route path="/profile/passenger" element={<PassengerRides />} />
 
                                                                                     {/* --- Espace admin --- */}
-                                                                                          <Route path="/admin" element={<Admin />} />
-                                                                                                <Route
-                                                                                                        path="/admin/dashboard"
-                                                                                                                element={
-                                                                                                                          <ProtectedAdminRoute>
-                                                                                                                                      <AdminDashboard />
-                                                                                                                                                </ProtectedAdminRoute>
-                                                                                                                                                        }
-                                                                                                                                                              />
-                                                                                                                                                                  </Routes>
-                                                                                                                                                                    );
-                                                                                                                                                                    }
-                                                                                                                                                                    
+                                                                                          <Route
+                                                                                                  path="/admin/dashboard"
+                                                                                                          element={
+                                                                                                                    <ProtectedAdminRoute>
+                                                                                                                                <AdminDashboard />
+                                                                                                                                          </ProtectedAdminRoute>
+                                                                                                                                                  }
+                                                                                                                                                        />
+
+                                                                                                                                                              {/* --- Espace employé --- */}
+                                                                                                                                                                    <Route
+                                                                                                                                                                            path="/employee/dashboard"
+                                                                                                                                                                                    element={
+                                                                                                                                                                                              <ProtectedEmployeeRoute>
+                                                                                                                                                                                                          <EmployeeDashboard />
+                                                                                                                                                                                                                    </ProtectedEmployeeRoute>
+                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                  />
+
+                                                                                                                                                                                                                                        <Route path="/admin" element={<Admin />} />
+                                                                                                                                                                                                                                            </Routes>
+                                                                                                                                                                                                                                              );
+                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                              
