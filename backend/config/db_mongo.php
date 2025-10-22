@@ -1,37 +1,46 @@
 <?php
 /**
- * ========================================================
- * EcoRide 2026 - Connexion MongoDB
- * ========================================================
- * Cette configuration gère la connexion à la base NoSQL
- * utilisée pour les avis passagers et les logs du système.
- *
- * ⚙️ Bonne pratique :
- *  - Utilisation de MongoDB\Client (extension officielle)
- *  - Gestion d'erreur propre via try/catch
- *  - Variables d’environnement pour la sécurité
- *  - Encodage UTF-8
+ * ======================================================
+ *  EcoRide 2026 - Connexion MongoDB
+ * ------------------------------------------------------
+ *  Gère la connexion à la base NoSQL MongoDB.
+ *  Charge les variables d'environnement depuis .env
+ *  et retourne une instance MongoDB\Database.
+ * ======================================================
  */
 
-require_once __DIR__ . '/../../vendor/autoload.php'; // charge l’autoload Composer si dispo
-
+require_once __DIR__ . '/../vendor/autoload.php';
+use Dotenv\Dotenv;
 use MongoDB\Client;
 
-$MONGO_URI = $_ENV['MONGO_URI'] ?? 'mongodb://localhost:27017';
-$MONGO_DB  = $_ENV['MONGO_DATABASE'] ?? 'ecoride_nosql';
+class MongoConnection {
+    private $client;
+    private $db;
 
-try {
-    // Connexion à MongoDB
-    $mongoClient = new Client($MONGO_URI);
-    $mongoDB = $mongoClient->selectDatabase($MONGO_DB);
+    public function __construct() {
+        // Chargement des variables d’environnement
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+        $dotenv->load();
 
-    // 🔄 Message de confirmation (optionnel en dev)
-    // echo "✅ Connexion MongoDB réussie : base $MONGO_DB\n";
+        $uri = $_ENV['MONGO_URI'] ?? 'mongodb://localhost:27017';
+        $database = $_ENV['MONGO_DATABASE'] ?? 'ecoride_nosql';
 
-} catch (Exception $e) {
-    http_response_code(500);
-    die(json_encode([
-        "error" => "Erreur de connexion MongoDB",
-        "message" => $e->getMessage()
-    ]));
+        try {
+            // Connexion MongoDB
+            $this->client = new Client($uri);
+            $this->db = $this->client->selectDatabase($database);
+
+            echo "✅ Connexion MongoDB réussie à la base : {$database}\n";
+        } catch (Exception $e) {
+            echo "❌ Erreur MongoDB : " . $e->getMessage() . "\n";
+            exit;
+        }
+    }
+
+    /**
+     * Retourne la base de données MongoDB
+     */
+    public function getDatabase() {
+        return $this->db;
+    }
 }
