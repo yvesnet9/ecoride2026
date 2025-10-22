@@ -1,43 +1,52 @@
 <?php
 /**
- * ========================================================
-  * EcoRide 2026 - Connexion MySQL (PDO)
-   * ========================================================
-    * Cette configuration gère la connexion à la base SQL
-     * utilisée pour les utilisateurs, rôles et trajets.
-      * 
-       * ⚙️ Bonne pratique :
-        *  - Utilisation de PDO (sécurisé, orienté objet)
-         *  - Mode d'erreur : Exception
-          *  - Encodage UTF-8
-           *  - Reconnexion via try/catch propre
-            */
+ * ======================================================
+ *  EcoRide 2026 - Connexion MySQL (PDO)
+ * ------------------------------------------------------
+ *  Gère la connexion à la base de données relationnelle.
+ *  Chargement via .env + PDO sécurisé + gestion d’erreurs.
+ * ======================================================
+ */
 
-            $DB_HOST = $_ENV['MYSQL_HOST']     ?? 'localhost';
-            $DB_NAME = $_ENV['MYSQL_DATABASE'] ?? 'ecoride_db';
-            $DB_USER = $_ENV['MYSQL_USER']     ?? 'root';
-            $DB_PASS = $_ENV['MYSQL_PASSWORD'] ?? '';
+require_once __DIR__ . '/../vendor/autoload.php';
+use Dotenv\Dotenv;
 
-            try {
-                $pdo = new PDO(
-                        "mysql:host={$DB_HOST};dbname={$DB_NAME};charset=utf8mb4",
-                                $DB_USER,
-                                        $DB_PASS,
-                                                [
-                                                            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,  // Lève une exception en cas d’erreur
-                                                                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,        // Retourne les résultats en tableau associatif
-                                                                                    PDO::ATTR_PERSISTENT         => false,                   // Pas de connexion persistante (plus propre en dev)
-                                                                                            ]
-                                                                                                );
+class MySQLConnection {
+    private $pdo;
 
-                                                                                                    // 🔄 Message de confirmation (à désactiver en prod)
-                                                                                                        // echo "✅ Connexion MySQL réussie !";
+    public function __construct() {
+        // 🔁 Chargement du fichier .env
+        $dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+        $dotenv->load();
 
-                                                                                                        } catch (PDOException $e) {
-                                                                                                            http_response_code(500);
-                                                                                                                die(json_encode([
-                                                                                                                        "error" => "Erreur de connexion MySQL",
-                                                                                                                                "message" => $e->getMessage()
-                                                                                                                                    ]));
-                                                                                                                                    }
-                                                                                                                                    
+        // 🧩 Lecture des variables d’environnement
+        $host = $_ENV['MYSQL_HOST'] ?? 'localhost';
+        $dbname = $_ENV['MYSQL_DATABASE'] ?? 'ecoride_db';
+        $user = $_ENV['MYSQL_USER'] ?? 'root';
+        $pass = $_ENV['MYSQL_PASSWORD'] ?? '';
+
+        // 🔒 Options PDO (sécurité + performance)
+        $options = [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // exceptions sur erreurs SQL
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // résultats sous forme de tableaux associatifs
+            PDO::ATTR_EMULATE_PREPARES   => false,                  // désactive l’émulation pour sécurité
+        ];
+
+        // 🧠 Tentative de connexion
+        try {
+            $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
+            $this->pdo = new PDO($dsn, $user, $pass, $options);
+            echo "✅ Connexion MySQL réussie à la base : {$dbname}\n";
+        } catch (PDOException $e) {
+            echo "❌ Erreur MySQL : " . $e->getMessage() . "\n";
+            exit;
+        }
+    }
+
+    /**
+     * Retourne l’instance PDO active
+     */
+    public function getConnection() {
+        return $this->pdo;
+    }
+}
