@@ -1,11 +1,18 @@
 <?php
-require 'config/db_mysql.php';
+require_once 'config/db.php';
 
-$db = new MySQLConnection();
-$conn = $db->getConnection();
+try {
+    $stmt = $pdo->query("SHOW TABLES");
+        $tables = $stmt->fetchAll();
 
-$stmt = $conn->query("SELECT NOW() as current_time");
-$result = $stmt->fetch();
+            echo "✅ Connexion réussie à la base de données !<br>";
+                echo "📋 Tables disponibles :<br>";
 
-echo "🕒 MySQL fonctionne, l'heure actuelle du serveur est : " . $result['current_time'] . "\n";
-
+                    foreach ($tables as $table) {
+                            echo "- " . $table['Tables_in_ecoride_db'] . "<br>";
+                                }
+                                } catch (PDOException $e) {
+                                    echo "❌ Erreur lors de la récupération des tables : " . $e->getMessage();
+                                    }
+                                    ?>
+                                    

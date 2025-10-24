@@ -2,25 +2,30 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 /**
- * Protège les routes réservées aux employés EcoRide.
-  * Actuellement, seul "admin@ecoride.fr" a accès (sera élargi à "employee@ecoride.fr" dans l'US13).
-   */
-   export default function ProtectedEmployeeRoute({ children }) {
-     const { currentUser } = useAuth();
+ * 🔒 ProtectedEmployeeRoute
+  * --------------------------------------------------
+   * Protège les routes réservées aux employés EcoRide.
+    * Actuellement, seul "admin@ecoride.fr" a accès.
+     * (Ce sera étendu à "employee@ecoride.fr" dans l'US13)
+      */
+      export default function ProtectedEmployeeRoute({ children }) {
+        // 1️⃣ Récupération de l'utilisateur connecté via le contexte d'authentification
+          const { currentUser } = useAuth();
 
-       // Aucun utilisateur connecté
-         if (!currentUser) {
-             return <Navigate to="/login" replace />;
-               }
+            // 2️⃣ Si aucun utilisateur n'est connecté → redirection vers la page de connexion
+              if (!currentUser) {
+                  return <Navigate to="/login" replace />;
+                    }
 
-                 // Vérifie si l'utilisateur est autorisé
-                   const authorizedEmails = ["admin@ecoride.fr", "employee@ecoride.fr"];
+                      // 3️⃣ Liste des adresses autorisées (administrateur et employés)
+                        const authorizedEmails = ["admin@ecoride.fr", "employee@ecoride.fr"];
 
-                     if (!authorizedEmails.includes(currentUser.email)) {
-                         return <Navigate to="/" replace />;
-                           }
+                          // 4️⃣ Si l’utilisateur n’est pas dans la liste autorisée → redirection vers la page d’accueil
+                            if (!authorizedEmails.includes(currentUser.email)) {
+                                return <Navigate to="/" replace />;
+                                  }
 
-                             // Autorisation accordée
-                               return children;
-                               }
-                               
+                                    // 5️⃣ Sinon → autorisation d’accès à la route protégée
+                                      return children;
+                                      }
+                                      
