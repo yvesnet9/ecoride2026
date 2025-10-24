@@ -1,0 +1,30 @@
+# ============================================================
+# 🌿 Render configuration - EcoRide 2026
+# Déploiement automatique du frontend (React) et backend (PHP)
+# ============================================================
+
+services:
+  - type: web
+      name: ecoride2026-backend
+          env: php
+              plan: free
+                  buildCommand: ""
+                      startCommand: php -S 0.0.0.0:10000 -t backend
+                          rootDir: backend
+                              envVars:
+                                    - key: DATABASE_URL
+                                            value: mysql://root:password@mysql/ecoride_db
+                                                  - key: MONGO_URI
+                                                          value: mongodb+srv://username:password@cluster.mongodb.net/ecoride
+
+                                                            - type: web
+                                                                name: ecoride2026-frontend
+                                                                    env: node
+                                                                        plan: free
+                                                                            buildCommand: npm install && npm run build
+                                                                                startCommand: npm run preview
+                                                                                    rootDir: .
+                                                                                        envVars:
+                                                                                              - key: VITE_API_URL
+                                                                                                      value: https://ecoride2026-backend.onrender.com/api
+                                                                                                      
