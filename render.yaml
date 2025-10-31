@@ -1,30 +1,22 @@
-# ============================================================
-# 🌿 Render configuration - EcoRide 2026
-# Déploiement automatique du frontend (React) et backend (PHP)
-# ============================================================
-
 services:
   - type: web
-      name: ecoride2026-backend
-          env: php
-              plan: free
-                  buildCommand: ""
-                      startCommand: php -S 0.0.0.0:10000 -t backend
-                          rootDir: backend
-                              envVars:
-                                    - key: DATABASE_URL
-                                            value: mysql://root:password@mysql/ecoride_db
-                                                  - key: MONGO_URI
-                                                          value: mongodb+srv://username:password@cluster.mongodb.net/ecoride
-
-                                                            - type: web
-                                                                name: ecoride2026-frontend
-                                                                    env: node
-                                                                        plan: free
-                                                                            buildCommand: npm install && npm run build
-                                                                                startCommand: npm run preview
-                                                                                    rootDir: .
-                                                                                        envVars:
-                                                                                              - key: VITE_API_URL
-                                                                                                      value: https://ecoride2026-backend.onrender.com/api
-                                                                                                      
+    name: ecoride-backend
+    env: php
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: composer install
+    startCommand: php -S 0.0.0.0:10000 -t .
+    envVars:
+      - key: PG_HOST
+        value: dpg-d3ug1me3jp1c73a9cesg-a.frankfurt-postgres.render.com
+      - key: PG_DBNAME
+        value: ecoride2026_db
+      - key: PG_USER
+        value: ecoride2026_db_user
+      - key: PG_PASS
+        value: ADL6GImPudvgGKZtjn0n6d3MMdYpMsOB
+      - key: PG_PORT
+        value: 5432
+      - key: PG_SSLMODE
+        value: require
