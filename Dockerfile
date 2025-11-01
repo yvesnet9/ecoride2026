@@ -1,32 +1,35 @@
-# ===============================================
-# 🚀 Dockerfile pour Render - Ecoride Backend PHP
-# ===============================================
+# ===============================
+# 🌱 Dockerfile pour backend Ecoride 2026 (PHP 8.3 + Composer + Render)
+# ===============================
 
+# Étape 1 : base PHP officielle
 FROM php:8.3-cli
 
-# Installer PostgreSQL et MongoDB extensions
+# Étape 2 : installer les extensions nécessaires
 RUN apt-get update && apt-get install -y \
-    libpq-dev libssl-dev pkg-config \
+    libpq-dev \
+    unzip \
+    git \
     && docker-php-ext-install pdo pdo_pgsql \
-    && pecl install mongodb \
-    && docker-php-ext-enable mongodb
+    && rm -rf /var/lib/apt/lists/*
 
-# Copier Composer
+# Étape 3 : installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Dossier de travail
-WORKDIR /app
-
-# Copier tout le projet
-COPY . .
-
-# Installer les dépendances PHP du backend
+# Étape 4 : copier le backend dans /app/backend
 WORKDIR /app/backend
+COPY backend/ /app/backend/
+
+# Étape 5 : installer les dépendances PHP (sans l’extension mongodb)
 RUN composer install --no-interaction --no-progress --ignore-platform-req=ext-mongodb
 
-# Exposer le port Render
+# Étape 6 : copier le router PHP pour le serveur intégré
+COPY backend/router.php /app/backend/router.php
+COPY backend/index.php /app/backend/index.php
+
+# Étape 7 : exposer le port utilisé par Render
 EXPOSE 10000
 
-# Démarrer le serveur PHP intégré
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "/app/backend"]
+# Étape 8 : lancer le serveur PHP intégré AVEC router.php
+CMD ["php", "-S", "0.0.0.0:10000", "-t", ".", "router.php"]
 
