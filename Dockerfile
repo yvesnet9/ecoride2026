@@ -2,36 +2,31 @@
 # 🚀 Dockerfile pour Render - Ecoride Backend PHP
 # ===============================================
 
-# 1️⃣ Image officielle PHP avec Composer
 FROM php:8.3-cli
 
-# 2️⃣ Installer les dépendances nécessaires à PostgreSQL et MongoDB
+# Installer PostgreSQL et MongoDB extensions
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libssl-dev \
-    pkg-config \
-    && docker-php-ext-install pdo pdo_pgsql
-
-# 3️⃣ Installer l’extension MongoDB
-RUN pecl install mongodb \
+    libpq-dev libssl-dev pkg-config \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && pecl install mongodb \
     && docker-php-ext-enable mongodb
 
-# 4️⃣ Installer Composer depuis l’image officielle
+# Copier Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# 5️⃣ Définir le répertoire de travail
+# Dossier de travail
 WORKDIR /app
 
-# 6️⃣ Copier tout le projet dans le conteneur
+# Copier tout le projet
 COPY . .
 
-# 7️⃣ Installer les dépendances PHP du backend uniquement
+# Installer les dépendances PHP du backend
 WORKDIR /app/backend
-RUN composer install --no-interaction --no-progress
+RUN composer install --no-interaction --no-progress --ignore-platform-req=ext-mongodb
 
-# 8️⃣ Exposer le port 10000 pour Render
+# Exposer le port Render
 EXPOSE 10000
 
-# 9️⃣ Démarrer le serveur PHP intégré depuis le dossier backend
+# Démarrer le serveur PHP intégré
 CMD ["php", "-S", "0.0.0.0:10000", "-t", "/app/backend"]
 
