@@ -1,71 +1,77 @@
 <?php
-// backend/api/login.php
+// =====================================================
+// 🎯 /api/login.php — Authentification utilisateur
+// =====================================================
 
-// ------------------------------
-// 1️⃣ En-têtes HTTP (CORS + JSON)
-// ------------------------------
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json; charset=UTF-8");
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// ------------------------------
-// 2️⃣ Si c’est une requête OPTIONS → fin (préflight)
-// ------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(200);
-    exit();
+    http_response_code(200);
+    exit;
+}
+
+// Charger la connexion PostgreSQL
+require_once __DIR__ . '/../config/db.php';
+
+// Vérifier méthode HTTP
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(["status" => "error", "message" => "Méthode non autorisée"]);
+    exit;
+}
+
+// Lire le JSON envoyé
+$input = json_decode(file_get_contents("php://input"), true);
+$email = trim($input['email'] ?? '');
+$password = trim($input['password'] ?? '');
+
+// Vérifier champs
+if (empty($email) || empty($password)) {
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "Email et mot de passe requis"]);
+    exit;
+}
+
+try {
+    // Rechercher l’utilisateur dans la base
+    $stmt = $pdo->prepare("SELECT id, email, password, nom FROM users WHERE email = :email");
+    $stmt->execute([':email' => $email]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(["status" => "error", "message" => "Utilisateur non trouvé"]);
+        exit;
     }
 
-    // ------------------------------
-    // 3️⃣ Connexion à la base MySQL
-    // ------------------------------
-    require_once __DIR__ . '/../config/db.php'; // fichier de connexion MySQL
-
-    // ------------------------------
-    // 4️⃣ Lecture des données envoyées (email + password)
-    // ------------------------------
-    $data = json_decode(file_get_contents("php://input"), true);
-
-    if (!isset($data['email']) || !isset($data['password'])) {
-      echo json_encode(["status" => "error", "message" => "Email et mot de passe requis."]);
+    // Vérifier le mot de passe (haché)
+    if (!password_verify($password, $user['password'])) {
+        http_response_code(401);
+        echo json_encode(["status" => "error", "message" => "Mot de passe incorrect"]);
         exit;
-        }
+    }
 
-        $email = trim($data['email']);
-        $password = trim($data['password']);
+    // Générer un token simple (JWT possible plus tard)
+    $token = bin2hex(random_bytes(24));
 
-        // ------------------------------
-        // 5️⃣ Requête SQL préparée pour éviter les injections
-        // ------------------------------
-        $stmt = $pdo->prepare("SELECT id, name, email, role, password_hash FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    echo json_encode([
+        "status" => "success",
+        "message" => "Connexion réussie 🎉",
+        "user" => [
+            "id" => $user['id'],
+            "email" => $user['email'],
+            "nom" => $user['nom']
+        ],
+        "token" => $token
+    ]);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode([
+        "status" => "error",
+        "message" => "Erreur serveur : " . $e->getMessage()
+    ]);
+}
 
-        if (!$user) {
-          echo json_encode(["status" => "error", "message" => "Utilisateur non trouvé."]);
-            exit;
-            }
-
-            // ------------------------------
-            // 6️⃣ Vérification du mot de passe
-            // ------------------------------
-            if (!password_verify($password, $user['password_hash'])) {
-              echo json_encode(["status" => "error", "message" => "Mot de passe incorrect."]);
-                exit;
-                }
-
-                // ------------------------------
-                // 7️⃣ Si tout est bon → renvoyer les infos utilisateur (sans le hash !)
-                // ------------------------------
-                echo json_encode([
-                  "status" => "success",
-                    "message" => "Connexion réussie.",
-                      "data" => [
-                          "id" => $user['id'],
-                              "name" => $user['name'],
-                                  "email" => $user['email'],
-                                      "role" => $user['role']
-                                        ]
-                                        ]);
-                                        
