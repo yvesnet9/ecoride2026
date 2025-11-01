@@ -2,28 +2,37 @@
 header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
 
-try {
-    $host = getenv("DB_HOST") ?: "localhost";
-    $port = getenv("DB_PORT") ?: "5432";
-    $dbname = getenv("DB_NAME") ?: "ecoride_db";
-    $user = getenv("DB_USER") ?: "postgres";
-    $pass = getenv("DB_PASS") ?: "";
+$env = [
+    "DB_HOST" => getenv("DB_HOST"),
+    "DB_PORT" => getenv("DB_PORT"),
+    "DB_NAME" => getenv("DB_NAME"),
+    "DB_USER" => getenv("DB_USER"),
+    "DB_PASS" => getenv("DB_PASS")
+];
 
-    $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
-    $pdo = new PDO($dsn, $user, $pass, [
+try {
+    $dsn = sprintf(
+        "pgsql:host=%s;port=%s;dbname=%s",
+        $env["DB_HOST"] ?: "localhost",
+        $env["DB_PORT"] ?: "5432",
+        $env["DB_NAME"] ?: "ecoride_db"
+    );
+
+    $pdo = new PDO($dsn, $env["DB_USER"], $env["DB_PASS"], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
 
     echo json_encode([
         "status" => "success",
-        "message" => "✅ Connexion PostgreSQL réussie !",
-        "driver" => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+        "message" => "✅ Connexion PostgreSQL réussie sur Render !",
+        "host" => $env["DB_HOST"],
         "version" => $pdo->getAttribute(PDO::ATTR_SERVER_VERSION)
     ]);
 } catch (Exception $e) {
     echo json_encode([
         "status" => "error",
-        "message" => "Erreur de connexion à PostgreSQL : " . $e->getMessage()
+        "message" => "Erreur de connexion PostgreSQL : " . $e->getMessage(),
+        "env" => $env
     ]);
 }
 
