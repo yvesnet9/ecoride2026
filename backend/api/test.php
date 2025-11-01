@@ -8,6 +8,6 @@ $response = [
     "timestamp" => date('Y-m-d H:i:s'),
 ];
 
-echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-?>
+// 🔥 Envoi la réponse JSON au navigateur
+echo json_encode($response);
 
