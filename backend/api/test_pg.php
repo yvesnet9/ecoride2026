@@ -1,6 +1,8 @@
 <?php
 header("Content-Type: application/json; charset=utf-8");
-header("Access-Control-Allow-Origin: *");
+require_once __DIR__ . '/../config/db.php';
+
+require_once __DIR__ . '/../config/db.php';
 
 $env = [
     "DB_HOST" => getenv("DB_HOST"),

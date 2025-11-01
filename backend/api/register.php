@@ -1,107 +1,63 @@
 <?php
-/**
- * ===========================================
-  * 🌿 EcoRide - API d'inscription utilisateur
-   * Backend : PHP + MySQL (PDO)
-    * Date : 2025-10-23
-     * ===========================================
-      *
-       * Étapes :
-        * 1️⃣ Récupérer les données envoyées par le frontend (name, email, password)
-         * 2️⃣ Vérifier que l’utilisateur n’existe pas déjà
-          * 3️⃣ Hasher le mot de passe (password_hash)
-           * 4️⃣ Enregistrer l’utilisateur dans la base MySQL
-            * 5️⃣ Retourner un JSON au frontend
-             */
+// backend/api/register.php
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-             // ------------------------------
-             // 1️⃣ Configuration CORS + JSON
-             // ------------------------------
-             header("Access-Control-Allow-Origin: *");
-             header("Access-Control-Allow-Methods: POST, OPTIONS");
-             header("Access-Control-Allow-Headers: Content-Type");
-             header("Content-Type: application/json; charset=UTF-8");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
-             // Si la requête est une pré-vérification (OPTIONS)
-             if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-                 http_response_code(200);
-                     exit();
-                     }
+require_once __DIR__ . '/../config/db.php'; // ✅ Connexion PDO déjà configurée
 
-                     // ------------------------------
-                     // 2️⃣ Connexion à la base de données
-                     // ------------------------------
-                     require_once __DIR__ . '/../config/db.php';
+try {
+    // 🔹 Lire les données JSON envoyées par le frontend React
+    $input = json_decode(file_get_contents("php://input"), true);
 
-                     // ------------------------------
-                     // 3️⃣ Lecture des données JSON reçues
-                     // ------------------------------
-                     $input = json_decode(file_get_contents("php://input"), true);
+    $name = trim($input['name'] ?? '');
+    $email = trim($input['email'] ?? '');
+    $password = trim($input['password'] ?? '');
 
-                     if (
-                         !isset($input['name']) ||
-                             !isset($input['email']) ||
-                                 !isset($input['password'])
-                                 ) {
-                                     echo json_encode([
-                                             "status" => "error",
-                                                     "message" => "Nom, email et mot de passe requis."
-                                                         ]);
-                                                             exit;
-                                                             }
+    // 🔸 Validation des champs
+    if (!$name || !$email || !$password) {
+        echo json_encode(["status" => "error", "message" => "Tous les champs sont obligatoires."]);
+        exit;
+    }
 
-                                                             $name = trim($input['name']);
-                                                             $email = trim($input['email']);
-                                                             $password = trim($input['password']);
+    // Vérifier si l’utilisateur existe déjà
+    $check = $pdo->prepare("SELECT id FROM users WHERE email = :email");
+    $check->execute(['email' => $email]);
+    if ($check->fetch()) {
+        echo json_encode(["status" => "error", "message" => "Cet email est déjà enregistré."]);
+        exit;
+    }
 
-                                                             // ------------------------------
-                                                             // 4️⃣ Vérifie si l’utilisateur existe déjà
-                                                             // ------------------------------
-                                                             try {
-                                                                 $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                                                                     $check->execute([$email]);
-                                                                         $existingUser = $check->fetch();
+    // Hacher le mot de passe
+    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-                                                                             if ($existingUser) {
-                                                                                     echo json_encode([
-                                                                                                 "status" => "error",
-                                                                                                             "message" => "Cet utilisateur existe déjà."
-                                                                                                                     ]);
-                                                                                                                             exit;
-                                                                                                                                 }
+    // Insérer l’utilisateur
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, password_hash, created_at) VALUES (:name, :email, :password, NOW())");
+    $stmt->execute([
+        'name' => $name,
+        'email' => $email,
+        'password' => $hashedPassword
+    ]);
 
-                                                                                                                                     // ------------------------------
-                                                                                                                                         // 5️⃣ Hash du mot de passe
-                                                                                                                                             // ------------------------------
-                                                                                                                                                 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    echo json_encode([
+        "status" => "success",
+        "message" => "✅ Utilisateur créé avec succès !",
+        "user" => [
+            "name" => $name,
+            "email" => $email
+        ]
+    ]);
 
-                                                                                                                                                     // ------------------------------
-                                                                                                                                                         // 6️⃣ Insertion de l’utilisateur
-                                                                                                                                                             // ------------------------------
-                                                                                                                                                                 $insert = $pdo->prepare(
-                                                                                                                                                                         "INSERT INTO users (name, email, role, password_hash)
-                                                                                                                                                                                  VALUES (?, ?, 'passenger', ?)"
-                                                                                                                                                                                      );
+} catch (PDOException $e) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Erreur SQL : " . $e->getMessage()
+    ]);
+}
 
-                                                                                                                                                                                          $insert->execute([$name, $email, $passwordHash]);
-
-                                                                                                                                                                                              // ------------------------------
-                                                                                                                                                                                                  // 7️⃣ Réponse au frontend
-                                                                                                                                                                                                      // ------------------------------
-                                                                                                                                                                                                          echo json_encode([
-                                                                                                                                                                                                                  "status" => "success",
-                                                                                                                                                                                                                          "message" => "Utilisateur créé avec succès 🎉",
-                                                                                                                                                                                                                                  "data" => [
-                                                                                                                                                                                                                                              "name" => $name,
-                                                                                                                                                                                                                                                          "email" => $email,
-                                                                                                                                                                                                                                                                      "role" => "passenger"
-                                                                                                                                                                                                                                                                              ]
-                                                                                                                                                                                                                                                                                  ]);
-                                                                                                                                                                                                                                                                                  } catch (Exception $e) {
-                                                                                                                                                                                                                                                                                      http_response_code(500);
-                                                                                                                                                                                                                                                                                          echo json_encode([
-                                                                                                                                                                                                                                                                                                  "status" => "error",
-                                                                                                                                                                                                                                                                                                          "message" => "Erreur serveur : " . $e->getMessage()
-                                                                                                                                                                                                                                                                                                              ]);
-                                                                                                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                                                                                              

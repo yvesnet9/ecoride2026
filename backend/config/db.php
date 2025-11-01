@@ -1,18 +1,27 @@
 <?php
-// ====================================================
-// 🌿 Fichier : backend/config/db.php
-// Rôle : Connexion MySQL (pour API EcoRide)
-// ====================================================
+// backend/config/db.php
+// Connexion silencieuse à PostgreSQL sur Render (avec SSL)
 
-$host = 'localhost';
-$dbname = 'ecoride_db';
-$username = 'ecoride_user';
-$password = 'ecoride123';
+$host = getenv('DB_HOST') ?: 'localhost';
+$db   = getenv('DB_NAME') ?: 'ecoride2026_db';
+$user = getenv('DB_USER') ?: 'ecoride2026_db_user';
+$pass = getenv('DB_PASS') ?: '';
+$port = getenv('DB_PORT') ?: '5432';
 
+// 🧩 Créer la variable $pdo disponible globalement
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Erreur de connexion à la base de données : " . $e->getMessage());
-            }
-            
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]);
+} catch (PDOException $e) {
+    // ⚠️ En cas d’erreur, enregistrer dans un log et retourner une réponse JSON si besoin
+    error_log("Erreur de connexion PostgreSQL : " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        "status" => "error",
+        "message" => "❌ Erreur de connexion à la base de données"
+    ]);
+    exit;
+}
+
