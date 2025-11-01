@@ -1,31 +1,30 @@
 # ============================================================
-# 🚀 Dockerfile pour backend PHP (Render)
+# 🚀 Dockerfile PHP 8.3 pour Render (avec PostgreSQL)
 # ============================================================
 
-# Étape 1 : Image de base PHP
 FROM php:8.3-cli
 
-# Étape 2 : Installer les extensions nécessaires
+# 1️⃣ Installer les extensions nécessaires
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     unzip \
     git \
+    && docker-php-ext-configure pdo_pgsql --with-pdo-pgsql \
     && docker-php-ext-install pdo pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
 
-# Étape 3 : Installer Composer (pour les dépendances PHP)
+# 2️⃣ Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Étape 4 : Copier le code du backend
+# 3️⃣ Copier le backend dans le conteneur
 WORKDIR /app/backend
 COPY . /app/backend
 
-# Étape 5 : Installer les dépendances PHP (sans l’extension Mongo)
+# 4️⃣ Installer les dépendances PHP (en ignorant ext-mongodb)
 RUN composer install --no-interaction --no-progress --ignore-platform-req=ext-mongodb
 
-# Étape 6 : Exposer le port 10000 (Render l’utilise par défaut)
+# 5️⃣ Exposer le port utilisé par Render
 EXPOSE 10000
 
-# Étape 7 : Commande de démarrage
+# 6️⃣ Démarrer le serveur PHP interne avec le router
 CMD ["php", "-S", "0.0.0.0:10000", "router.php"]
-
