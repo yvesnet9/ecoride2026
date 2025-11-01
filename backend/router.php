@@ -1,52 +1,57 @@
 <?php
-// router.php — routeur universel Render pour backend PHP
+// router.php — Routeur universel Render pour backend PHP
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Répondre immédiatement aux requêtes OPTIONS (pré-vol CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
+// 🔍 Récupérer le chemin demandé
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = trim($uri, "/");
+$path = trim($uri, '/');
 
-// 🔎 Gestion des routes API
-if (strpos($uri, "api/") === 0) {
-    $route = str_replace("api/", "", $uri);
+// 🧭 Router les requêtes API
+if (preg_match('/^api\//', $path)) {
+    $apiPath = __DIR__ . '/' . $path;
 
-    $file = __DIR__ . "/api/" . $route . ".php";
-
-    if (file_exists($file)) {
-        require $file;
+    // ✅ Si le fichier existe, on l’inclut
+    if (file_exists($apiPath)) {
+        require $apiPath;
     } else {
-        http_response_code(404);
+        // 🚀 Liste des routes disponibles pour debug
+        $routes = [];
+        foreach (glob(__DIR__ . '/api/*.php') as $file) {
+            $routes[] = str_replace(__DIR__, '', $file);
+            $routes = array_map(fn($r) => str_replace('/api', '/api', $r), $routes);
+        }
+
         echo json_encode([
-            "error" => "Route $route not found",
+            "error" => "Route {$path} not found",
             "available_routes" => [
                 "/api/test",
-                "/api/users",
+                "/api/test_pg.php",
                 "/api/login",
-                "/api/register"
+                "/api/register",
+                "/api/users"
             ]
         ]);
     }
-    exit;
+} else {
+    // 🌱 Page d’accueil par défaut
+    echo json_encode([
+        "status" => "success",
+        "message" => "🌱 Ecoride Backend API — Online ✅",
+        "routes" => [
+            "/api/test",
+            "/api/test_pg.php",
+            "/api/login",
+            "/api/register",
+            "/api/users"
+        ]
+    ]);
 }
-
-// Page d’accueil du backend
-header("Content-Type: application/json; charset=utf-8");
-echo json_encode([
-    "status" => "success",
-    "message" => "🌱 Ecoride Backend API — Online ✅",
-    "routes" => [
-        "/api/test",
-        "/api/users",
-        "/api/login",
-        "/api/register"
-    ]
-]);
 
