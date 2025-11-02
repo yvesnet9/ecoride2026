@@ -1,63 +1,66 @@
 <?php
-// backend/api/register.php
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+require_once __DIR__ . '/../config/db.php';
+
+// --- Lecture robuste du corps JSON ---
+$raw = file_get_contents("php://input");
+
+// Debug temporaire
+file_put_contents(__DIR__ . "/debug_register.txt", "RAW:\n" . $raw . "\n\n_POST:\n" . print_r($_POST, true));
+
+$data = json_decode($raw, true);
+if (!$data || !is_array($data)) {
+    $data = $_POST;
+}
+
+// --- Validation des champs ---
+if (empty($data['nom']) || empty($data['email']) || empty($data['mot_de_passe'])) {
+    echo json_encode(["status" => "error", "message" => "Tous les champs sont obligatoires."]);
     exit;
 }
 
-require_once __DIR__ . '/../config/db.php'; // ✅ Connexion PDO déjà configurée
+$nom = trim($data['nom']);
+$email = trim($data['email']);
+$mot_de_passe = trim($data['mot_de_passe']);
+
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(["status" => "error", "message" => "Adresse email invalide."]);
+    exit;
+}
+
+if (strlen($mot_de_passe) < 6) {
+    echo json_encode(["status" => "error", "message" => "Le mot de passe doit contenir au moins 6 caractères."]);
+    exit;
+}
+
+$hash = password_hash($mot_de_passe, PASSWORD_DEFAULT);
 
 try {
-    // 🔹 Lire les données JSON envoyées par le frontend React
-    $input = json_decode(file_get_contents("php://input"), true);
-
-    $name = trim($input['name'] ?? '');
-    $email = trim($input['email'] ?? '');
-    $password = trim($input['password'] ?? '');
-
-    // 🔸 Validation des champs
-    if (!$name || !$email || !$password) {
-        echo json_encode(["status" => "error", "message" => "Tous les champs sont obligatoires."]);
-        exit;
-    }
-
-    // Vérifier si l’utilisateur existe déjà
-    $check = $pdo->prepare("SELECT id FROM users WHERE email = :email");
+    $check = $pdo->prepare("SELECT id FROM utilisateurs WHERE email = :email");
     $check->execute(['email' => $email]);
     if ($check->fetch()) {
         echo json_encode(["status" => "error", "message" => "Cet email est déjà enregistré."]);
         exit;
     }
 
-    // Hacher le mot de passe
-    $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-    // Insérer l’utilisateur
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, password_hash, created_at) VALUES (:name, :email, :password, NOW())");
+    $stmt = $pdo->prepare("
+        INSERT INTO utilisateurs (nom, email, mot_de_passe, role, date_creation)
+        VALUES (:nom, :email, :mot_de_passe, 'passager', NOW())
+    ");
     $stmt->execute([
-        'name' => $name,
+        'nom' => $nom,
         'email' => $email,
-        'password' => $hashedPassword
+        'mot_de_passe' => $hash
     ]);
 
-    echo json_encode([
-        "status" => "success",
-        "message" => "✅ Utilisateur créé avec succès !",
-        "user" => [
-            "name" => $name,
-            "email" => $email
-        ]
-    ]);
+    echo json_encode(["status" => "success", "message" => "Utilisateur créé avec succès."]);
 
 } catch (PDOException $e) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Erreur SQL : " . $e->getMessage()
-    ]);
+    echo json_encode(["status" => "error", "message" => "Erreur SQL : " . $e->getMessage()]);
 }
+?>
 
