@@ -3,33 +3,19 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-$raw = file_get_contents("php://input");
-$stdin = stream_get_contents(STDIN);
-file_put_contents(__DIR__ . "/debug_login.txt", 
-    "RAW:\n" . $raw . 
-    "\n\nSTDIN:\n" . $stdin . 
-    "\n\n_POST:\n" . print_r($_POST, true) . 
-    "\n\n_SERVER:\n" . print_r($_SERVER, true)
-);
 
 require_once __DIR__ . '/../config/db.php';
 
 // --- Lecture la plus robuste possible du corps JSON ---
 $raw = file_get_contents("php://input");
 
-// Si vide, tenter avec php://stdin (Render bug connu)
-if (!$raw) {
-    $raw = stream_get_contents(STDIN);
-}
+// Debug pour savoir ce que Render reçoit
+file_put_contents(__DIR__ . "/debug_login.txt", "RAW:\n" . $raw . "\n\n_POST:\n" . print_r($_POST, true));
 
-// Si encore vide, tenter via $_POST (form classique)
 $data = json_decode($raw, true);
 if (!$data || !is_array($data)) {
     $data = $_POST;
 }
-
-// --- DEBUG temporaire (tu pourras retirer après test) ---
-file_put_contents(__DIR__ . "/debug_login.txt", "RAW:\n" . $raw . "\n\n_POST:\n" . print_r($_POST, true));
 
 // --- Vérifie les champs requis ---
 if (empty($data['email']) || empty($data['mot_de_passe'])) {
