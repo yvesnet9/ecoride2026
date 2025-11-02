@@ -1,72 +1,84 @@
 <?php
-// backend/api/login.php
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+$raw = file_get_contents("php://input");
+$stdin = stream_get_contents(STDIN);
+file_put_contents(__DIR__ . "/debug_login.txt", 
+    "RAW:\n" . $raw . 
+    "\n\nSTDIN:\n" . $stdin . 
+    "\n\n_POST:\n" . print_r($_POST, true) . 
+    "\n\n_SERVER:\n" . print_r($_SERVER, true)
+);
 
-// 🔁 Réponse immédiate pour les requêtes OPTIONS (CORS preflight)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+require_once __DIR__ . '/../config/db.php';
+
+// --- Lecture la plus robuste possible du corps JSON ---
+$raw = file_get_contents("php://input");
+
+// Si vide, tenter avec php://stdin (Render bug connu)
+if (!$raw) {
+    $raw = stream_get_contents(STDIN);
+}
+
+// Si encore vide, tenter via $_POST (form classique)
+$data = json_decode($raw, true);
+if (!$data || !is_array($data)) {
+    $data = $_POST;
+}
+
+// --- DEBUG temporaire (tu pourras retirer après test) ---
+file_put_contents(__DIR__ . "/debug_login.txt", "RAW:\n" . $raw . "\n\n_POST:\n" . print_r($_POST, true));
+
+// --- Vérifie les champs requis ---
+if (empty($data['email']) || empty($data['mot_de_passe'])) {
+    echo json_encode(["status" => "error", "message" => "Veuillez fournir un email et un mot de passe."]);
     exit;
 }
 
-require_once __DIR__ . '/../config/db.php'; // Connexion PDO à Render PostgreSQL
+$email = trim($data['email']);
+$mot_de_passe = trim($data['mot_de_passe']);
 
-// 🔒 Lire le corps JSON envoyé
-$input = json_decode(file_get_contents('php://input'), true);
-$email = trim($input['email'] ?? '');
-$password = trim($input['password'] ?? '');
-
-// 🚨 Vérification des champs obligatoires
-if (empty($email) || empty($password)) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Veuillez fournir un email et un mot de passe."
-    ]);
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(["status" => "error", "message" => "Adresse email invalide."]);
     exit;
 }
 
 try {
-    // 🔍 Rechercher l'utilisateur dans PostgreSQL
-    $stmt = $pdo->prepare("SELECT id, email, password FROM users WHERE email = :email LIMIT 1");
+    if (!isset($pdo)) {
+        throw new Exception("Connexion à la base de données non initialisée.");
+    }
+
+    $stmt = $pdo->prepare("SELECT id, nom, email, mot_de_passe, date_creation FROM utilisateurs WHERE email = :email");
     $stmt->execute(['email' => $email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $stmt->fetch();
 
     if (!$user) {
-        echo json_encode([
-            "status" => "error",
-            "message" => "Utilisateur non trouvé."
-        ]);
+        echo json_encode(["status" => "error", "message" => "Utilisateur introuvable."]);
         exit;
     }
 
-    // 🔑 Vérifier le mot de passe haché (password_hash)
-    if (!password_verify($password, $user['password'])) {
-        echo json_encode([
-            "status" => "error",
-            "message" => "Mot de passe incorrect."
-        ]);
+    if (!password_verify($mot_de_passe, $user['mot_de_passe'])) {
+        echo json_encode(["status" => "error", "message" => "Mot de passe incorrect."]);
         exit;
     }
-
-    // 🎟️ Générer un token simple (à remplacer plus tard par JWT)
-    $token = bin2hex(random_bytes(16));
 
     echo json_encode([
         "status" => "success",
-        "message" => "Connexion réussie 🎉",
+        "message" => "Connexion réussie.",
         "user" => [
             "id" => $user['id'],
-            "email" => $user['email']
-        ],
-        "token" => $token
+            "nom" => $user['nom'],
+            "email" => $user['email'],
+            "date_creation" => $user['date_creation']
+        ]
     ]);
 
 } catch (PDOException $e) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Erreur SQL : " . $e->getMessage()
-    ]);
+    echo json_encode(["status" => "error", "message" => "Erreur SQL : " . $e->getMessage()]);
+} catch (Exception $e) {
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
+?>
 
