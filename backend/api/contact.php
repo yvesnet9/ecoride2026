@@ -1,88 +1,69 @@
 <?php
-// ====================================================
-// 🌿 Fichier : backend/api/contact.php
-// Rôle : gérer les messages du formulaire de contact (MySQL)
-// - POST → envoi d’un nouveau message
-// - GET  → récupération de tous les messages
-// ====================================================
-
-header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-// Autoriser les requêtes préflight CORS
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(200);
-    exit;
-}
-
-error_reporting(E_ALL);
-ini_set("display_errors", 1);
-
-require_once __DIR__ . "/../config/db_mysql.php"; // ✅ Connexion MySQL
+require_once __DIR__ . '/../config/db.php'; // Connexion PostgreSQL
 
 try {
-    $pdo = getMySQLConnection();
+    // 🔍 Lecture du JSON reçu
+    $data = json_decode(file_get_contents("php://input"), true);
 
-    // ==========================================
-    // 📨 1️⃣ Récupération de tous les messages (GET)
-    // ==========================================
-    if ($_SERVER["REQUEST_METHOD"] === "GET" && isset($_GET["all"])) {
-        $stmt = $pdo->query("SELECT * FROM messages ORDER BY created_at DESC");
-        $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            "success" => true,
-            "count" => count($messages),
-            "messages" => $messages
-        ], JSON_PRETTY_PRINT);
+    if (!$data || empty($data['nom']) || empty($data['email']) || empty($data['message'])) {
+        echo json_encode(["status" => "error", "message" => "Tous les champs sont obligatoires."]);
         exit;
     }
 
-    // ==========================================
-    // 💌 2️⃣ Envoi d’un nouveau message (POST)
-    // ==========================================
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
-        $data = json_decode(file_get_contents("php://input"), true);
+    $nom = trim($data['nom']);
+    $email = trim($data['email']);
+    $message = trim($data['message']);
 
-        // Vérification des champs
-        if (
-            empty($data["name"]) ||
-            empty($data["email"]) ||
-            empty($data["message"])
-        ) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "error" => "Champs manquants"
-            ]);
-            exit;
-        }
-
-        // Insertion dans la base MySQL
-        $stmt = $pdo->prepare("INSERT INTO messages (name, email, message) VALUES (?, ?, ?)");
-        $stmt->execute([$data["name"], $data["email"], $data["message"]]);
-
-        echo json_encode([
-            "success" => true,
-            "message" => "Message enregistré avec succès"
-        ]);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(["status" => "error", "message" => "Adresse e-mail invalide."]);
         exit;
     }
 
-    // ==========================================
-    // ❌ 3️⃣ Méthode non autorisée
-    // ==========================================
-    http_response_code(405);
+    // ✅ Création de la table si elle n’existe pas encore
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY,
+            nom VARCHAR(100) NOT NULL,
+            email VARCHAR(150) NOT NULL,
+            message TEXT NOT NULL,
+            date_envoi TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ");
+
+    // 💾 Insertion du message
+    $stmt = $pdo->prepare("
+        INSERT INTO messages (nom, email, message)
+        VALUES (:nom, :email, :message)
+    ");
+    $stmt->execute([
+        ':nom' => $nom,
+        ':email' => $email,
+        ':message' => $message
+    ]);
+
     echo json_encode([
-        "success" => false,
-        "error" => "Méthode non autorisée"
+        "status" => "success",
+        "message" => "Message reçu avec succès 🌿",
+        "data" => [
+            "nom" => $nom,
+            "email" => $email,
+            "date_envoi" => date('Y-m-d H:i:s')
+        ]
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
     echo json_encode([
-        "success" => false,
-        "error" => "Erreur MySQL : " . $e->getMessage()
+        "status" => "error",
+        "message" => "Erreur SQL : " . $e->getMessage()
+    ]);
+} catch (Exception $e) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Erreur serveur : " . $e->getMessage()
     ]);
 }
+
